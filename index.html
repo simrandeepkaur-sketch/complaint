@@ -665,10 +665,15 @@ function submit() {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(p)
     })
-    .then(r => r.json())
-    .then(data => {
-      /* n8n returns { complaint_id: "CMP-2026-0012", ... } */
-      const ref = data.complaint_id || fallbackRef();
+    .then(r => r.text())
+    .then(text => {
+      let ref = fallbackRef();
+      try {
+        const data = JSON.parse(text);
+        if (data && data.complaint_id) ref = data.complaint_id;
+      } catch(e) {
+        /* n8n returned plain text or a number — use fallback */
+      }
       doSuccess(ref);
     })
     .catch(e => {
