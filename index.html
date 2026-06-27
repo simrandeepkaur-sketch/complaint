@@ -308,14 +308,12 @@ textarea{resize:vertical;min-height:95px;line-height:1.6}
     <div class="type-badge"><i class="ti ti-alert-circle"></i> Raising a Complaint</div>
   </div>
   <div class="card">
-    <!-- STEPS -->
     <div class="steps" id="steps">
       <div class="step"><div class="step-line" id="line-1"></div><div class="step-dot active" id="dot-1">1</div><div class="step-lbl active" id="lbl-1">Details</div></div>
       <div class="step"><div class="step-line" id="line-2"></div><div class="step-dot wait" id="dot-2">2</div><div class="step-lbl" id="lbl-2">Location</div></div>
       <div class="step"><div class="step-dot wait" id="dot-3">3</div><div class="step-lbl" id="lbl-3">Review</div></div>
     </div>
 
-    <!-- STEP 1: DETAILS -->
     <div class="panel active" id="panel-1">
       <div class="sec-title">What is the complaint?</div>
       <div class="sec-sub">Describe what is broken, not working, or needs repair.</div>
@@ -361,7 +359,6 @@ textarea{resize:vertical;min-height:95px;line-height:1.6}
       </div>
     </div>
 
-    <!-- STEP 2: LOCATION + DEPARTMENT -->
     <div class="panel" id="panel-2">
       <div class="sec-title">Location &amp; department</div>
       <div class="sec-sub">Select the area where the complaint is, then assign it to the right department.</div>
@@ -388,7 +385,6 @@ textarea{resize:vertical;min-height:95px;line-height:1.6}
             <label>Floor</label>
             <select id="floor"><option value="">Select building first…</option></select>
           </div>
-          <!-- CHANGED: Room is now a free text input instead of a dropdown -->
           <div class="fg" style="margin-bottom:0">
             <label>Room / Area</label>
             <input type="text" id="room" placeholder="e.g. Ward 4, Server room…">
@@ -423,7 +419,6 @@ textarea{resize:vertical;min-height:95px;line-height:1.6}
       </div>
     </div>
 
-    <!-- STEP 3: REVIEW -->
     <div class="panel" id="panel-3">
       <div class="sec-title">Review your complaint</div>
       <div class="sec-sub">Check everything before submitting. It goes straight to the unit head on Slack.</div>
@@ -438,7 +433,6 @@ textarea{resize:vertical;min-height:95px;line-height:1.6}
       </div>
     </div>
 
-    <!-- SUCCESS -->
     <div class="panel" id="panel-success">
       <div class="success">
         <button class="success-close" onclick="tryClose()" title="Close"><i class="ti ti-x"></i></button>
@@ -462,11 +456,10 @@ textarea{resize:vertical;min-height:95px;line-height:1.6}
 </div>
 
 <script>
-/* ── CONFIG ── */
 const WH = 'https://prabhaasra.app.n8n.cloud/webhook/ticket-raised';
 const slackUid = new URLSearchParams(window.location.search).get('uid') || '';
+const urlName  = new URLSearchParams(window.location.search).get('name') || '';
 
-/* ── UNIT HEADS ── */
 const UH = {
   'Civil':       { name: 'Kishore Bharti', av: 'KB', slack_id: 'U0B76AKCTAP' },
   'IT':          { name: 'Harjeet Kaur',   av: 'HK', slack_id: 'U04K3AKHD52' },
@@ -475,7 +468,6 @@ const UH = {
   'Head Office': { name: 'Narinder Kaur',  av: 'NK', slack_id: 'U04U4RQFUBW' }
 };
 
-/* ── LOCATION DATA ── */
 const LOC = {
   Padiala: {
     'Building A': { 'Ground': ['Main hall','Reception','Store'], 'Floor 1': ['Ward 2','Ward 3','Admin'] },
@@ -505,7 +497,14 @@ const UL = {
 let urg = '';
 const urgIds = ['emergency','urgent','24h','48h','1week'];
 
-/* ── URGENCY SELECT ── */
+/* ── AUTO-FILL NAME FROM URL ── */
+window.addEventListener('DOMContentLoaded', () => {
+  if (urlName) {
+    const el = document.getElementById('emp-name');
+    if (el) el.value = decodeURIComponent(urlName);
+  }
+});
+
 function sel(u) {
   urg = u;
   urgIds.forEach(id => {
@@ -515,20 +514,17 @@ function sel(u) {
   });
 }
 
-/* ── FIELD HELPER ── */
 function v(id) {
   const el = document.getElementById(id);
   return el ? el.value.trim() : '';
 }
 
-/* ── LOCATION CASCADES ── */
 function uB() {
   const br = v('branch');
   const s = document.getElementById('building');
   s.innerHTML = '<option value="">Select building…</option>';
   if (br && LOC[br]) Object.keys(LOC[br]).forEach(b => s.add(new Option(b, b)));
   document.getElementById('floor').innerHTML = '<option value="">Select building first…</option>';
-  // Room is now a text field — just clear it
   const roomEl = document.getElementById('room');
   if (roomEl) roomEl.value = '';
 }
@@ -539,10 +535,8 @@ function uF() {
   s.innerHTML = '<option value="">Select floor…</option>';
   if (br && bl && LOC[br] && LOC[br][bl])
     Object.keys(LOC[br][bl]).forEach(f => s.add(new Option(f, f)));
-  // Room is a text field — no cascading needed
 }
 
-/* ── UNIT HEAD CARD ── */
 function uH() {
   const d = v('department');
   const c = document.getElementById('head-card');
@@ -558,7 +552,6 @@ function uH() {
   }
 }
 
-/* ── STEP NAVIGATION ── */
 function go(n) {
   if (n === 2) {
     if (!v('emp-name'))   { alert('Please enter your name.');              return; }
@@ -578,7 +571,6 @@ function go(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ── PROGRESS BAR ── */
 function prog(n) {
   for (let i = 1; i <= 3; i++) {
     const d  = document.getElementById('dot-'  + i);
@@ -592,7 +584,6 @@ function prog(n) {
   }
 }
 
-/* ── BUILD REVIEW ── */
 function buildReview() {
   const d   = v('department');
   const h   = UH[d];
@@ -616,7 +607,6 @@ function buildReview() {
   if (rh) rh.textContent = h ? h.name + ' (' + d + ' unit head)' : 'The unit head';
 }
 
-/* ── SUBMIT ── */
 function submit() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
@@ -641,7 +631,6 @@ function submit() {
     room:               v('room')
   };
 
-  /* ── SUCCESS HANDLER ── */
   const doSuccess = (ref) => {
     document.getElementById('success-ref').textContent  = ref;
     document.getElementById('success-head').textContent = h ? h.name : 'Unit head';
@@ -656,7 +645,6 @@ function submit() {
     btn.innerHTML = '<i class="ti ti-send"></i> Submit complaint';
   };
 
-  /* ── FALLBACK ID (if webhook doesn't return one) ── */
   const fallbackRef = () => 'CMP-2026-' + String(Math.floor(Math.random() * 9000) + 1000);
 
   if (WH) {
@@ -671,9 +659,7 @@ function submit() {
       try {
         const data = JSON.parse(text);
         if (data && data.complaint_id) ref = data.complaint_id;
-      } catch(e) {
-        /* n8n returned plain text or a number — use fallback */
-      }
+      } catch(e) {}
       doSuccess(ref);
     })
     .catch(e => {
@@ -685,7 +671,6 @@ function submit() {
   }
 }
 
-/* ── COUNTDOWN ── */
 function startCountdown(secs) {
   const bar = document.getElementById('countdown-bar');
   const num = document.getElementById('countdown-num');
